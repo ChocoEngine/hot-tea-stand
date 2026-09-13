@@ -1,0 +1,47 @@
+# macOS and editors
+.DS_Store
+._*
+.AppleDouble/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python environments and generated caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+/archive/generated-cache/
+
+# ESP-IDF / PlatformIO / CMake build output
+build/
+.pio/
+managed_components/
+sdkconfig
+sdkconfig.old
+
+# Local credentials and settings (keep shareable examples)
+.env
+.env.*
+!.env.example
+!.env.sample
+secrets.h
+secrets.json
+credentials.json
+*.pem
+*.key
+
+# Rhino and slicer automatic backups; keep intentional model versions
+*.3dmbak
+*.stlbak
+*.autosave
+
+# Duplicate archive of the unpacked source project
+/code/esp32c6-zigbee-light.zip
+
+# CAD models, STL/3MF exports, references and sdkconfig.defaults are tracked.

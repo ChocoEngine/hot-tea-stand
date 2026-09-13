@@ -1,0 +1,138 @@
+<div id="esp32-final-perfboard" style="width:100%;max-width:820px;margin:0 auto;color:var(--foreground);font-family:ui-sans-serif,system-ui,sans-serif;">
+  <div style="font-size:16px;font-weight:500;margin-bottom:3px;">Последний вариант разводки — по фактическому расположению</div>
+  <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:8px;">Вид со стороны ESP; NTC и сигнальные перемычки можно разместить на обратной стороне</div>
+  <svg id="esp32-final-svg" viewBox="0 0 820 610" width="100%" role="img" aria-labelledby="esp32-final-title esp32-final-desc">
+    <title id="esp32-final-title">ESP32-C6 и пять NTC на перфорированной плате</title>
+    <desc id="esp32-final-desc">От края ESP наружу расположены шина земли, пять резисторов, пять отдельных измерительных узлов, NTC и шина 3V3. Резисторы соединены с землей, NTC с питанием.</desc>
+    <g id="final-board"></g>
+    <g id="final-wiring"></g>
+    <g id="final-esp"></g>
+    <g id="final-labels"></g>
+  </svg>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted-foreground);">
+    <span><i style="display:inline-block;width:17px;height:3px;background:var(--viz-series-6);vertical-align:middle;margin-right:5px;"></i>GND</span>
+    <span><i style="display:inline-block;width:17px;height:3px;background:var(--orange);vertical-align:middle;margin-right:5px;"></i>3V3</span>
+    <span><i style="display:inline-block;width:17px;height:3px;background:var(--viz-series-5);vertical-align:middle;margin-right:5px;"></i>точка измерения / GPIO</span>
+    <span><i style="display:inline-block;width:17px;border-top:2px dashed var(--viz-series-5);vertical-align:middle;margin-right:5px;"></i>изолированный провод с обратной стороны</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  const svg = document.getElementById('esp32-final-svg');
+  const board = document.getElementById('final-board');
+  const wiring = document.getElementById('final-wiring');
+  const esp = document.getElementById('final-esp');
+  const labels = document.getElementById('final-labels');
+  const ns = 'http://www.w3.org/2000/svg';
+  const el = (tag,attrs,parent=svg) => {
+    const node=document.createElementNS(ns,tag);
+    Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,value));
+    parent.appendChild(node);
+    return node;
+  };
+  const txt = (x,y,value,attrs={},parent=labels) => {
+    const node=el('text',{x,y,fill:'var(--foreground)','font-size':'12',...attrs},parent);
+    node.textContent=value;
+    return node;
+  };
+  const line = (x1,y1,x2,y2,color,width=2,parent=wiring,dash='') => el('line',{
+    x1,y1,x2,y2,stroke:color,'stroke-width':width,'stroke-linecap':'round',
+    ...(dash?{'stroke-dasharray':dash}:{})
+  },parent);
+  const poly = (points,color,width=2,dash='') => el('polyline',{
+    points:points.map(point=>point.join(',')).join(' '),fill:'none',stroke:color,
+    'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',
+    ...(dash?{'stroke-dasharray':dash}:{})
+  },wiring);
+  const pad = (x,y,color='var(--border)',r=4,parent=board) => el('circle',{cx:x,cy:y,r,fill:color},parent);
+
+  // Green perforated board and its isolated pads.
+  el('rect',{x:35,y:38,width:735,height:520,rx:8,fill:'var(--viz-series-2)',opacity:'0.14',stroke:'var(--viz-series-2)','stroke-width':'2'},board);
+  for(let y=55;y<=540;y+=20){
+    for(let x=52;x<=752;x+=20){
+      pad(x,y,'var(--border)',2.8);
+    }
+  }
+
+  const powerY=82;
+  const groundY=276;
+  line(125,powerY,650,powerY,'var(--orange)',5);
+  line(125,groundY,650,groundY,'var(--viz-series-6)',5);
+  txt(665,powerY+4,'шина 3V3',{'font-size':'12','font-weight':'500'});
+  txt(665,groundY+4,'шина GND',{'font-size':'12','font-weight':'500'});
+
+  const channels = [
+    {x:205,gpio:'GPIO2',pin:[180,315]},
+    {x:295,gpio:'GPIO3',pin:[220,315]},
+    {x:385,gpio:'GPIO4',pin:[260,505]},
+    {x:475,gpio:'GPIO5',pin:[300,505]},
+    {x:565,gpio:'GPIO6',pin:[340,505]}
+  ];
+
+  channels.forEach((channel,index)=>{
+    const nodeY=188;
+    const resistorTop=208;
+    const resistorBottom=252;
+    // R goes from the individual measurement node down to the common GND bus.
+    line(channel.x,nodeY,channel.x,resistorTop,'var(--viz-series-5)',2.4);
+    el('rect',{x:channel.x-8,y:resistorTop,width:16,height:resistorBottom-resistorTop,rx:5,fill:'var(--background)',stroke:'var(--foreground)','stroke-width':'2'},wiring);
+    line(channel.x,resistorBottom,channel.x,groundY,'var(--foreground)',2);
+    txt(channel.x+13,235,`R${index+1}`,{'font-size':'11','font-weight':'500'});
+
+    // NTC is on the reverse side between 3V3 and the same node.
+    line(channel.x,powerY,channel.x,125,'var(--orange)',2.2,wiring,'5 4');
+    el('ellipse',{cx:channel.x,cy:142,rx:11,ry:8,fill:'var(--viz-series-3)',stroke:'var(--foreground)','stroke-width':'1.5'},wiring);
+    line(channel.x,125,channel.x,134,'var(--orange)',2.2,wiring,'5 4');
+    line(channel.x,150,channel.x,nodeY,'var(--viz-series-5)',2.2,wiring,'5 4');
+    pad(channel.x,nodeY,'var(--viz-series-5)',6,wiring);
+    txt(channel.x,121,`NTC${index+1}`,{'text-anchor':'middle','font-size':'11','font-weight':'500'});
+    txt(channel.x,nodeY-9,channel.gpio,{'text-anchor':'middle','font-size':'11','font-weight':'500'});
+
+    // Signal wire on the reverse side; GPIO4..6 are reached from the far header.
+    const [pinX,pinY]=channel.pin;
+    const routeY=index<2 ? 294-index*8 : 535+(index-2)*10;
+    if(index<2){
+      poly([[channel.x,nodeY],[channel.x,routeY],[pinX,routeY],[pinX,pinY]],'var(--viz-series-5)',2,'6 4');
+    } else {
+      const routeX=610+(index-2)*18;
+      poly([[channel.x,nodeY],[routeX,nodeY],[routeX,routeY],[pinX,routeY],[pinX,pinY]],'var(--viz-series-5)',2,'6 4');
+    }
+  });
+
+  // ESP board follows the orientation in the supplied photograph: antenna left, USB right.
+  el('rect',{x:105,y:315,width:560,height:190,rx:7,fill:'var(--background)',stroke:'var(--viz-series-1)','stroke-width':'3'},esp);
+  el('rect',{x:105,y:350,width:92,height:120,rx:3,fill:'var(--viz-series-2)',opacity:'0.28',stroke:'var(--viz-series-2)','stroke-width':'2'},esp);
+  txt(151,414,'антенна',{'text-anchor':'middle','font-size':'11'},esp);
+  el('rect',{x:197,y:347,width:230,height:126,rx:5,fill:'var(--viz-series-2)',opacity:'0.18',stroke:'var(--viz-series-2)','stroke-width':'2'},esp);
+  txt(312,412,'ESP32-C6',{'text-anchor':'middle','font-size':'15','font-weight':'500'},esp);
+  el('rect',{x:646,y:340,width:92,height:54,rx:9,fill:'var(--viz-series-4)',opacity:'0.34',stroke:'var(--viz-series-4)','stroke-width':'2'},esp);
+  el('rect',{x:646,y:426,width:92,height:54,rx:9,fill:'var(--viz-series-4)',opacity:'0.34',stroke:'var(--viz-series-4)','stroke-width':'2'},esp);
+  txt(692,372,'USB 1',{'text-anchor':'middle','font-size':'11'},esp);
+  txt(692,458,'USB 2',{'text-anchor':'middle','font-size':'11'},esp);
+
+  const pins = [
+    {x:140,y:315,label:'GND',color:'var(--viz-series-6)',above:true},
+    {x:180,y:315,label:'GPIO2',color:'var(--viz-series-5)',above:true},
+    {x:220,y:315,label:'GPIO3',color:'var(--viz-series-5)',above:true},
+    {x:140,y:505,label:'GND',color:'var(--viz-series-6)'},
+    {x:180,y:505,label:'3V3',color:'var(--orange)'},
+    {x:220,y:505,label:'RST',color:'var(--viz-series-1)'},
+    {x:260,y:505,label:'GPIO4',color:'var(--viz-series-5)'},
+    {x:300,y:505,label:'GPIO5',color:'var(--viz-series-5)'},
+    {x:340,y:505,label:'GPIO6',color:'var(--viz-series-5)'}
+  ];
+  pins.forEach(pin=>{
+    pad(pin.x,pin.y,pin.color,6,esp);
+    txt(pin.x,pin.above?333:490,pin.label,{'text-anchor':'middle','font-size':'10','font-weight':'500'},esp);
+  });
+
+  // Short GND feed and a single long insulated 3V3 feed to the outer bus.
+  poly([[140,315],[140,groundY]],'var(--viz-series-6)',3);
+  poly([[180,505],[82,505],[82,powerY],[125,powerY]],'var(--orange)',3,'7 4');
+  txt(72,292,'GND',{'text-anchor':'middle','font-size':'11','font-weight':'500','fill':'var(--viz-series-6)'});
+  txt(72,178,'провод 3V3',{'text-anchor':'middle','font-size':'11','font-weight':'500',transform:'rotate(-90 72 178)' });
+
+  txt(402,585,'Не соединять пять точек GPIO между собой: общей является только GND и отдельная шина 3V3',{'text-anchor':'middle','font-size':'11','font-weight':'500'});
+})();
+</script>

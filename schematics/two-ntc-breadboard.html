@@ -1,0 +1,133 @@
+<div id="two-ntc-breadboard" style="width:100%;max-width:620px;margin:0 auto;color:var(--foreground);font-family:ui-sans-serif,system-ui,sans-serif;">
+  <div style="font-size:16px;font-weight:500;margin-bottom:3px;">Два NTC на макетной плате — вид сверху</div>
+  <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:8px;">Делитель: 3V3 → NTC → GPIO → резистор → GND</div>
+  <svg id="two-ntc-svg" viewBox="0 0 430 760" width="100%" role="img" aria-labelledby="two-ntc-title two-ntc-desc">
+    <title id="two-ntc-title">Схема двух NTC на макетной плате</title>
+    <desc id="two-ntc-desc">ESP32-C6 занимает ряды 16–30. Два делителя собраны в рядах 4 и 9: NTC подключены к 3V3, резисторы к GND, средние точки идут на GPIO2 и GPIO3.</desc>
+    <g id="breadboard-base"></g>
+    <g id="breadboard-circuit"></g>
+    <g id="breadboard-labels"></g>
+  </svg>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted-foreground);">
+    <span><i style="display:inline-block;width:16px;height:3px;background:var(--orange);vertical-align:middle;margin-right:5px;"></i>3V3</span>
+    <span><i style="display:inline-block;width:16px;height:3px;background:var(--viz-series-6);vertical-align:middle;margin-right:5px;"></i>GND</span>
+    <span><i style="display:inline-block;width:16px;height:3px;background:var(--viz-series-5);vertical-align:middle;margin-right:5px;"></i>сигнал NTC → GPIO</span>
+    <span><i style="display:inline-block;width:16px;height:8px;border:2px solid var(--foreground);box-sizing:border-box;vertical-align:middle;margin-right:5px;"></i>резистор</span>
+  </div>
+</div>
+
+<script>
+(() => {
+  const svg = document.getElementById('two-ntc-svg');
+  const base = document.getElementById('breadboard-base');
+  const circuit = document.getElementById('breadboard-circuit');
+  const labels = document.getElementById('breadboard-labels');
+  const ns = 'http://www.w3.org/2000/svg';
+  const cols = {a:95,b:115,c:135,d:155,e:175,f:245,g:265,h:285,i:305,j:325};
+  const rail = {lp:25,lm:45,rp:380,rm:400};
+  const rowY = row => 55 + (row - 1) * 20;
+  const el = (tag, attrs, parent=svg) => {
+    const node = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([key,value]) => node.setAttribute(key,value));
+    parent.appendChild(node);
+    return node;
+  };
+  const txt = (x,y,value,attrs={},parent=labels) => {
+    const node = el('text',{x,y,fill:'var(--foreground)','font-size':'12',...attrs},parent);
+    node.textContent=value;
+    return node;
+  };
+  const wire = (points,color,width=2,dash='') => el('polyline',{
+    points:points.map(p=>p.join(',')).join(' '),fill:'none',stroke:color,
+    'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',
+    ...(dash ? {'stroke-dasharray':dash} : {})
+  },circuit);
+  const hole = (x,y,parent=base,fill='var(--border)',r=3.1) => el('circle',{cx:x,cy:y,r,fill},parent);
+
+  el('rect',{x:8,y:25,width:414,height:660,rx:8,fill:'var(--background)',stroke:'var(--border)','stroke-width':'2'},base);
+  el('rect',{x:188,y:38,width:44,height:620,fill:'var(--muted)',opacity:'0.55'},base);
+  el('line',{x1:rail.rp,y1:42,x2:rail.rp,y2:654,stroke:'var(--orange)','stroke-width':'3'},base);
+  el('line',{x1:rail.rm,y1:42,x2:rail.rm,y2:654,stroke:'var(--viz-series-6)','stroke-width':'3'},base);
+  el('line',{x1:rail.lp,y1:42,x2:rail.lp,y2:654,stroke:'var(--orange)','stroke-width':'3',opacity:'0.35'},base);
+  el('line',{x1:rail.lm,y1:42,x2:rail.lm,y2:654,stroke:'var(--viz-series-6)','stroke-width':'3',opacity:'0.35'},base);
+
+  Object.entries(cols).forEach(([name,x]) => {
+    txt(x,43,name,{'text-anchor':'middle','font-weight':'500'});
+    txt(x,674,name,{'text-anchor':'middle','font-weight':'500'});
+  });
+  txt(rail.rp,43,'+',{'text-anchor':'middle','font-size':'15','font-weight':'500'});
+  txt(rail.rm,43,'−',{'text-anchor':'middle','font-size':'15','font-weight':'500'});
+  for(let row=1; row<=30; row++) {
+    const y=rowY(row);
+    Object.values(cols).forEach(x=>hole(x,y));
+    [rail.lp,rail.lm,rail.rp,rail.rm].forEach(x=>hole(x,y,base,'var(--border)',2.8));
+    txt(70,y+4,String(row),{'text-anchor':'middle','font-size':'11','fill':'var(--muted-foreground)'});
+    txt(350,y+4,String(row),{'text-anchor':'middle','font-size':'11','fill':'var(--muted-foreground)'});
+  }
+
+  // ESP32-C6 straddles the centre channel. Pin rows are a and i.
+  el('rect',{x:83,y:rowY(16)-15,width:234,height:310,rx:7,fill:'var(--viz-series-2)',opacity:'0.18',stroke:'var(--viz-series-2)','stroke-width':'2'},circuit);
+  el('rect',{x:118,y:rowY(16)-6,width:164,height:72,rx:5,fill:'var(--viz-series-2)',opacity:'0.28'},circuit);
+  txt(200,rowY(16)+35,'антенна',{'text-anchor':'middle','font-size':'11'},circuit);
+  txt(200,rowY(23)+5,'ESP32-C6',{'text-anchor':'middle','font-size':'14','font-weight':'500'},circuit);
+  el('rect',{x:135,y:rowY(30)+11,width:54,height:35,rx:8,fill:'var(--viz-series-4)',opacity:'0.35',stroke:'var(--viz-series-4)','stroke-width':'2'},circuit);
+  el('rect',{x:211,y:rowY(30)+11,width:54,height:35,rx:8,fill:'var(--viz-series-4)',opacity:'0.35',stroke:'var(--viz-series-4)','stroke-width':'2'},circuit);
+  txt(200,rowY(30)+63,'USB за краем платы',{'text-anchor':'middle','font-size':'11','font-weight':'500'},circuit);
+  for(let row=16;row<=30;row++) {
+    hole(cols.a,rowY(row),circuit,'var(--viz-series-1)',5.4);
+    hole(cols.i,rowY(row),circuit,'var(--viz-series-1)',5.4);
+  }
+
+  // Explicit supply jumpers: a17 is connected to e17 inside the breadboard;
+  // i16 is connected to j16. The jumpers feed the right-hand power rails.
+  wire([[cols.e,rowY(17)],[rail.rp,rowY(17)]],'var(--orange)',4);
+  wire([[cols.j,rowY(16)],[rail.rm,rowY(16)]],'var(--viz-series-6)',4);
+  hole(cols.e,rowY(17),circuit,'var(--orange)',7);
+  hole(rail.rp,rowY(17),circuit,'var(--orange)',7);
+  hole(cols.j,rowY(16),circuit,'var(--viz-series-6)',7);
+  hole(rail.rm,rowY(16),circuit,'var(--viz-series-6)',7);
+  txt(264,rowY(17)-9,'ПИТАНИЕ: e17 → красная шина +',{'text-anchor':'middle','font-size':'11','font-weight':'500'});
+  txt(355,rowY(16)-9,'j16 → синяя шина −',{'text-anchor':'middle','font-size':'11','font-weight':'500'});
+
+  const sensors = [
+    {row:4,gpioRow:17,gpio:'GPIO2',tapX:cols.f,beadY:88,label:'NTC1'},
+    {row:9,gpioRow:18,gpio:'GPIO3',tapX:cols.g,beadY:188,label:'NTC2'}
+  ];
+  sensors.forEach((sensor,index) => {
+    const y=rowY(sensor.row);
+    // The five holes f-j are one electrical node on this row.
+    el('line',{x1:cols.f,y1:y,x2:cols.j,y2:y,stroke:'var(--viz-series-5)','stroke-width':'10',opacity:'0.20'},circuit);
+    // Fixed resistor from the shared divider node to the GND rail.
+    el('line',{x1:cols.j,y1:y,x2:338,y2:y,stroke:'var(--foreground)','stroke-width':'2'},circuit);
+    el('rect',{x:338,y:y-7,width:27,height:14,rx:3,fill:'var(--background)',stroke:'var(--foreground)','stroke-width':'2'},circuit);
+    el('line',{x1:365,y1:y,x2:rail.rm,y2:y,stroke:'var(--foreground)','stroke-width':'2'},circuit);
+    hole(rail.rm,y,circuit,'var(--viz-series-6)',6);
+    txt(351.5,y+4,`R${index+1}`,{'text-anchor':'middle','font-size':'11'},circuit);
+    // Signal jumper from divider node to the GPIO row containing the ESP pin.
+    const routeX=index===0 ? 235 : 225;
+    wire([[sensor.tapX,y],[routeX,y],[routeX,rowY(sensor.gpioRow)],[cols.f,rowY(sensor.gpioRow)]],'var(--viz-series-5)',2.5);
+    // Remote NTC: one wire to the divider node, the other to the 3V3 rail.
+    el('ellipse',{cx:210,cy:sensor.beadY,rx:9,ry:7,fill:'var(--viz-series-3)',stroke:'var(--foreground)','stroke-width':'1.5'},circuit);
+    wire([[219,sensor.beadY+3],[sensor.tapX,y]],'var(--viz-series-5)',2);
+    wire([[201,sensor.beadY-3],[190,sensor.beadY-12],[370,sensor.beadY-12],[370,y],[rail.rp,y]],'var(--orange)',2);
+    hole(rail.rp,y,circuit,'var(--orange)',6);
+    txt(184,sensor.beadY+4,sensor.label,{'text-anchor':'end','font-size':'11','font-weight':'500'},circuit);
+    txt(274,y-8,`узел ${sensor.label}`,{'text-anchor':'middle','font-size':'11'},circuit);
+  });
+
+  // Direct labels for the only ESP pins needed in this two-sensor prototype.
+  [
+    [cols.a,rowY(16),'GND','end','var(--viz-series-6)'],
+    [cols.a,rowY(17),'3V3','end','var(--orange)'],
+    [cols.i,rowY(16),'GND','start','var(--viz-series-6)'],
+    [cols.i,rowY(17),'GPIO2','start','var(--viz-series-5)'],
+    [cols.i,rowY(18),'GPIO3','start','var(--viz-series-5)']
+  ].forEach(([x,y,label,anchor,color]) => {
+    hole(x,y,circuit,color,7);
+    txt(anchor==='end'?x-10:x+10,y+4,label,{'text-anchor':anchor,'font-size':'11','font-weight':'500'},circuit);
+  });
+
+  txt(215,718,'NTC1/NTC2 → красная шина 3V3; R1/R2 → синяя шина GND',{'text-anchor':'middle','font-size':'11','font-weight':'500'});
+  txt(215,738,'Перед включением проверить мультиметром: + ↔ 3V3, − ↔ GND, между + и − нет КЗ',{'text-anchor':'middle','font-size':'11','fill':'var(--muted-foreground)'});
+})();
+</script>
